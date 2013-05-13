@@ -1,3 +1,5 @@
+module DictUtils
+
 function coalesce(args...)
   for arg in args
     if arg != null
@@ -21,7 +23,7 @@ end
 function addDicts!{K,V}(map1::Dict{K,V},
                         map2::Dict{K,V},
                         weight::V)
-  combine!((x, y) -> coalesce(x, 0) + weight * coalesce(y, 0), 
+  combine!((x, y) -> coalesce(x, zero(V)) + weight * coalesce(y, zero(V)), 
            map1, map2)
 end
 
@@ -72,9 +74,7 @@ function serializeMap(deserializedMap::Dict{ASCIIString,Float64})
   return(join(Array{String,1}[k * ":" * v for (k,v) in deserializedMap], ","))
 end
 
+export coalesce, combine!, addDicts!, mapValues!,
+       normalizeDict!, sortedHead!, sortedTail!
 
-x = ["foo"=>1,"bar"=>2,"baz"=>3]
-sortedTail!(x, 4)
-print(x)
-sortedTail!(x, 2)
-print(x)
+end
