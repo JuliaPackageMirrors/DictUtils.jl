@@ -25,3 +25,10 @@ sortedTail!(v, 4)
 @assert v == ["foo"=>1,"bar"=>2,"baz"=>3]
 sortedTail!(v, 2)
 @assert v == ["bar"=>2,"baz"=>3]
+
+print(typeof(showCompact))
+# z = showCompact(v)
+
+#@assert showCompact(v) == "bar:2,baz:3"
+@assert parseCompact{ASCIIString,FloatingPoint}("bar:2,baz:3") == v
+

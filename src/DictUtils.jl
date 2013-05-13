@@ -38,43 +38,68 @@ function normalizeDict!{K,V<:Number}(m::Dict{K,V})
   mapValues!(x -> x/s, m)
 end
 
-function sortedHead!{K,V}(m::Dict{K,V}, N::Int64, args...)
+function sortedHead!{K,V}(f::Function, m::Dict{K,V}, N::Int64)
   if length(m) <= N
     return
   end
   collection = collect(m)
-  sort!((x,y) -> x[2] < y[2], collection, args...)
+  sort!(f, collection)
 
   for (k,v) in collection[(N+1):]
     delete!(m, k)
   end
 end
 
-function sortedTail!{K,V}(m::Dict{K,V}, N::Int64, args...)
-  sortedHead!(m, N, Sort.Reverse, args)
+function sortedHead!{K,V}(m::Dict{K,V}, N::Int64)
+  sortedHead!((x,y) -> x[2] < y[2], m, N)
 end
 
-function deserializeMap(serializedMap::String)
-  result = Dict{ASCIIString,Float64}()
-  if serializedMap == ""
+function sortedTail!{K,V}(m::Dict{K,V}, N::Int64, args...)
+  sortedHead!((x,y) -> x[2] > y[2], m, N)
+end
+
+type CompactRepr
+  keySeparator::String
+  entrySeparator::String
+end
+
+DefaultCompactRepr = CompactRepr(":", ",")
+
+function showCompact{K,V}(m::Dict{K,V}, config::CompactRepr)
+  # Note that without the typehint on the Array, this will somehow get
+  # converted to nothing on empty input.
+  return join(
+    Array{String,1}[string(k) * config.keySeparator * string(v)
+                    for (k, v) in m], 
+    config.entrySeparator
+  )
+end
+
+function showCompact{K,V}(m::Dict{K,V})
+  return showCompact{K,V}(m, DefaultCompactRepr)
+end
+
+function parseCompact{K,V}(s::String, config::CompactRepr)
+  result = Dict{K,V}()
+  if s == ""
     return(result)
   end
-  entries = split(serializedMap, ",")
+  entries = split(s, config.entrySeparator)
   for entry in entries
-    parts = split(entry, ":")
-    assert(length(parts) == 2)
-    result[parts[1]] = float(parts[2])
+    parts = split(entry, config.keySeparator)
+    @assert length(parts) == 2
+    result[K(parts[1])] = V(parts[2])
   end
   return(result)
 end
 
-function serializeMap(deserializedMap::Dict{ASCIIString,Float64})
-  # Note that without the typehint on the Array, this will somehow get
-  # converted to nothing on empty input.
-  return(join(Array{String,1}[k * ":" * v for (k,v) in deserializedMap], ","))
+function parseCompact{K,V}(s::String)
+  return parseCompact{K,V}(s, DefaultCompactRepr)
 end
 
 export coalesce, combine!, addDicts!, mapValues!,
-       normalizeDict!, sortedHead!, sortedTail!
+       normalizeDict!, sortedHead!, sortedTail!,
+       showCompact, parseCompact, CompactRepr,
+       DefaultCompactRepr
 
 end
