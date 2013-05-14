@@ -12,7 +12,6 @@ v = ["foo"=>1.0,"bar"=>2.0,"baz"=>3.0]
 addDicts!(x, y, 1.0)
 @assert x == ["foo"=>1,"bar"=>1,"baz"=>2]
 
-
 normalizeDict!(x)
 @assert x == ["foo"=>0.25,"bar"=>0.25,"baz"=>0.5]
 
