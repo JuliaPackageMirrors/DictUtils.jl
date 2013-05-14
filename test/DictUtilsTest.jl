@@ -26,9 +26,8 @@ sortedTail!(v, 4)
 sortedTail!(v, 2)
 @assert v == ["bar"=>2,"baz"=>3]
 
-print(typeof(showCompact))
-# z = showCompact(v)
-
-#@assert showCompact(v) == "bar:2,baz:3"
-@assert parseCompact{ASCIIString,FloatingPoint}("bar:2,baz:3") == v
-
+@assert showCompact(v) == "bar:2.0,baz:3.0"
+@assert parsePrimitive(String, "3") == "3"
+@assert parsePrimitive(Float64, "3") == 3.0
+@assert parsePrimitive(Int64, "3") == 3
+@assert parseCompact("bar:2,baz:3", String, Float64) == v

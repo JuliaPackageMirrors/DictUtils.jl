@@ -23,8 +23,11 @@ end
 function addDicts!{K,V}(map1::Dict{K,V},
                         map2::Dict{K,V},
                         weight::V)
-  combine!((x, y) -> coalesce(x, zero(V)) + weight * coalesce(y, zero(V)), 
-           map1, map2)
+  return combine!(
+    (x, y) -> coalesce(x, zero(V)) + weight * coalesce(y, zero(V)),
+    map1,
+    map2
+  )
 end
 
 function mapValues!{K,V}(f::Function, m::Dict{K,V})
@@ -35,7 +38,7 @@ end
 
 function normalizeDict!{K,V<:Number}(m::Dict{K,V})
   s = sum(values(m))
-  mapValues!(x -> x/s, m)
+  return mapValues!(x -> x/s, m)
 end
 
 function sortedHead!{K,V}(f::Function, m::Dict{K,V}, N::Int64)
@@ -69,17 +72,27 @@ function showCompact{K,V}(m::Dict{K,V}, config::CompactRepr)
   # Note that without the typehint on the Array, this will somehow get
   # converted to nothing on empty input.
   return join(
-    Array{String,1}[string(k) * config.keySeparator * string(v)
-                    for (k, v) in m], 
+    String[string(k) * config.keySeparator * string(v)
+           for (k, v) in m],
     config.entrySeparator
   )
 end
 
-function showCompact{K,V}(m::Dict{K,V})
-  return showCompact{K,V}(m, DefaultCompactRepr)
+showCompact{K,V}(m::Dict{K,V}) = showCompact(m, DefaultCompactRepr)
+
+function parsePrimitive{T<:Integer}(::Type{T}, s::String)
+  return parse_int(T, s)
 end
 
-function parseCompact{K,V}(s::String, config::CompactRepr)
+function parsePrimitive{T<:FloatingPoint}(::Type{T}, s::String)
+  return parse_float(T, s)
+end
+
+function parsePrimitive{T<:String}(::Type{T}, s::String)
+  return s
+end
+
+function parseCompact(s::String, K::DataType, V::DataType, config::CompactRepr)
   result = Dict{K,V}()
   if s == ""
     return(result)
@@ -88,18 +101,16 @@ function parseCompact{K,V}(s::String, config::CompactRepr)
   for entry in entries
     parts = split(entry, config.keySeparator)
     @assert length(parts) == 2
-    result[K(parts[1])] = V(parts[2])
+    result[parsePrimitive(K, parts[1])] = parsePrimitive(V, parts[2])
   end
   return(result)
 end
 
-function parseCompact{K,V}(s::String)
-  return parseCompact{K,V}(s, DefaultCompactRepr)
-end
+parseCompact(s::String, K::DataType, V::DataType) =
+  parseCompact(s, K, V, DefaultCompactRepr)
 
 export coalesce, combine!, addDicts!, mapValues!,
        normalizeDict!, sortedHead!, sortedTail!,
-       showCompact, parseCompact, CompactRepr,
-       DefaultCompactRepr
-
+       CompactRepr, DefaultCompactRepr,
+       parsePrimitive, showCompact, parseCompact
 end
