@@ -11,10 +11,10 @@ end
 
 function combine!{K,V}(f::Function,
                        map1::Dict{K,V},
-                       map2::Dict{K,V}) 
+                       map2::Dict{K,V})
   allKeys = Set{K}()
-  add_each!(allKeys, keys(map1))
-  add_each!(allKeys, keys(map2))
+  union!(allKeys, keys(map1))
+  union!(allKeys, keys(map2))
   for k in allKeys
     map1[k] = f(get(map1, k, null), get(map2, k, null))
   end
@@ -48,7 +48,7 @@ function sortedHead!{K,V}(f::Function, m::Dict{K,V}, N::Int64)
   collection = collect(m)
   sort!(f, collection)
 
-  for (k,v) in collection[(N+1):]
+  for (k,v) in collection[(N+1):end]
     delete!(m, k)
   end
 end
